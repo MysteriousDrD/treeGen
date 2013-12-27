@@ -281,20 +281,25 @@ void init()
 	{
 		
 		cout << vertices[i] << ",";
-		cout << vertices[i+1] << ",";
+		cout << vertices[i+1];
 		cout << vertices[i+2] << ",";
 		cout << endl;
 	}
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
-
-	GLfloat *colors = pts.data();
+	vector<float> cols;
+	for(int i = 0; i < nVertices; i++)
+	{
+		cols.push_back(0); //r
+		cols.push_back(1); //g
+		cols.push_back(0); //b
+		cols.push_back(0); //a
+	}
+	GLfloat *colors = cols.data();
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
-
 	generateObjectBuffer(vertices, colors);
 	linkCurrentBuffertoShader(shaderProgramID);
-	
 }
 
 int main(int argc, char** argv){
