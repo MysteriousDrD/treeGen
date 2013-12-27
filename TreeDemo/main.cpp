@@ -21,8 +21,8 @@ using namespace std;
 GLuint shaderProgramID;
 
 unsigned int teapot_vao = 0;
-int width = 800.0;
-int height = 600.0;
+int width = 1920.0;
+int height = 1080.0;
 int nVertices = 0;
 // Shader Functions- click on + to expand
 #pragma region SHADER_FUNCTIONS
@@ -131,6 +131,7 @@ GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
 	// if you have more data besides vertices (e.g., vertex colours or normals), use glBufferSubData to tell the buffer when the vertices array ends and when the colors start
 	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*2*sizeof(GLfloat), vertices);
 	glBufferSubData (GL_ARRAY_BUFFER, numVertices*2*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors);
+
 	return VBO;
 }
 
@@ -176,6 +177,7 @@ void display(){
 
 string treeSystem(string tree, int depth)
 {
+	
 
 	if(depth == 1) return tree;
 	string tmpTree = tree;
@@ -206,7 +208,7 @@ string treeSystem(string tree, int depth)
 vector<float> walkTree(string tree)
 {
 	//cout << tree << endl;
-
+	
 	vector<float> points;
 	float currX = 0.25;
 	float currY = 0;
@@ -217,18 +219,27 @@ vector<float> walkTree(string tree)
 	{
 		if(tree[i] == 'F')
 		{
-		//	cout << "moving forward" << endl;
-			currY += 1;
+			//	cout << "moving forward" << endl;
+			currY += 0.1;
+			points.push_back(currX);
+			points.push_back(currY);
+			nVertices++;
 		}
 		if(tree[i] =='+')
 		{
-		//	cout << "moving left" << endl;
+			//	cout << "moving left" << endl;
 			currX -= angle;
+			points.push_back(currX);
+			points.push_back(currY);
+			nVertices++;
 		}
 		if(tree[i] == '-')
 		{
-		//	cout << "moving right" << endl;
+			//	cout << "moving right" << endl;
 			currX += angle;
+			points.push_back(currX);
+			points.push_back(currY);
+			nVertices++;
 		}
 		if(tree[i] == '[')
 		{
@@ -241,11 +252,9 @@ vector<float> walkTree(string tree)
 			currY = tmpY;
 		}
 
-		points.push_back(currX);
-		points.push_back(currY);
-		nVertices++;
-	}
 
+	}
+	cout << "Vertices: " <<  nVertices << endl;
 	return points;
 }
 
@@ -279,9 +288,9 @@ void init()
 	for(int i = 0; i < pts.size(); i += 2)
 	{
 		
-		//cout << vertices[i] << ",";
-		//cout << vertices[i+1] << ",";
-		//cout << endl;
+		cout << vertices[i] << ",";
+		cout << vertices[i+1] << ",";
+		cout << endl;
 	}
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
