@@ -254,8 +254,8 @@ vector<float> walkTree(string tree)
 		if(tree[i] == ']')
 		{
 			cout << "restoring to " << currX << " , " << currY<< endl;
-			currX = tmpX.top;
-			currY = tmpY.top;
+			currX = tmpX.top();
+			currY = tmpY.top();
 			tmpX.pop();
 			tmpY.pop();
 		}
