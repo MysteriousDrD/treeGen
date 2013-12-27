@@ -127,10 +127,10 @@ GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
 	// Buffer will contain an array of vertices 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// After binding, we now fill our object with data, everything in "Vertices" goes to the GPU
-	glBufferData(GL_ARRAY_BUFFER, numVertices*7*sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, numVertices*6*sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 	// if you have more data besides vertices (e.g., vertex colours or normals), use glBufferSubData to tell the buffer when the vertices array ends and when the colors start
-	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*3*sizeof(GLfloat), vertices);
-	glBufferSubData (GL_ARRAY_BUFFER, numVertices*3*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors);
+	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*2*sizeof(GLfloat), vertices);
+	glBufferSubData (GL_ARRAY_BUFFER, numVertices*2*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors);
 	return VBO;
 }
 
@@ -142,10 +142,10 @@ void linkCurrentBuffertoShader(GLuint shaderProgramID){
 	// Have to enable this
 	glEnableVertexAttribArray(positionID);
 	// Tell it where to find the position data in the currently active buffer (at index positionID)
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(positionID, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	// Similarly, for the color data.
 	glEnableVertexAttribArray(colorID);
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(numVertices*3*sizeof(GLfloat)));
+	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(numVertices*2*sizeof(GLfloat)));
 }
 
 #pragma endregion VBO_FUNCTIONS
@@ -205,7 +205,7 @@ string treeSystem(string tree, int depth)
 
 vector<float> walkTree(string tree)
 {
-	cout << tree << endl;
+	//cout << tree << endl;
 
 	vector<float> points;
 	float currX = 0.25;
@@ -217,17 +217,17 @@ vector<float> walkTree(string tree)
 	{
 		if(tree[i] == 'F')
 		{
-			cout << "moving forward" << endl;
+		//	cout << "moving forward" << endl;
 			currY += 1;
 		}
 		if(tree[i] =='+')
 		{
-			cout << "moving left" << endl;
+		//	cout << "moving left" << endl;
 			currX -= angle;
 		}
 		if(tree[i] == '-')
 		{
-			cout << "moving right" << endl;
+		//	cout << "moving right" << endl;
 			currX += angle;
 		}
 		if(tree[i] == '[')
@@ -243,7 +243,6 @@ vector<float> walkTree(string tree)
 
 		points.push_back(currX);
 		points.push_back(currY);
-		points.push_back(0);
 		nVertices++;
 	}
 
@@ -277,13 +276,12 @@ void init()
 
 	GLfloat *vertices = pts.data();
 
-	for(int i = 0; i < pts.size(); i += 3)
+	for(int i = 0; i < pts.size(); i += 2)
 	{
 		
-		cout << vertices[i] << ",";
-		cout << vertices[i+1];
-		cout << vertices[i+2] << ",";
-		cout << endl;
+		//cout << vertices[i] << ",";
+		//cout << vertices[i+1] << ",";
+		//cout << endl;
 	}
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
