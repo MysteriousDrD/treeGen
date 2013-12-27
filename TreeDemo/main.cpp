@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <stack>
 #include "time.h"
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -207,49 +208,56 @@ string treeSystem(string tree, int depth)
 
 vector<float> walkTree(string tree)
 {
-	//cout << tree << endl;
+	cout << tree << endl;
 	
 	vector<float> points;
 	float currX = 0.25;
 	float currY = 0;
-	float tmpX = 0;
-	float tmpY = 0;
+	stack<float> tmpX;
+	stack<float> tmpY;
 	float angle = 0.25;
 	for(int i = 0; i < tree.size(); i++)
 	{
 		if(tree[i] == 'F')
 		{
-			//	cout << "moving forward" << endl;
+			
 			currY += 0.1;
+			cout << "moving forward to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
 			nVertices++;
 		}
 		if(tree[i] =='+')
 		{
-			//	cout << "moving left" << endl;
+			
 			currX -= angle;
+			cout << "moving left to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
 			nVertices++;
 		}
 		if(tree[i] == '-')
 		{
-			//	cout << "moving right" << endl;
+			
 			currX += angle;
+			cout << "moving right to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
 			nVertices++;
 		}
 		if(tree[i] == '[')
 		{
-			tmpX = currX;
-			tmpY = currY;
+			cout << "storing " << currX << " , " << currY<< endl;
+			tmpX.push(currX);
+			tmpY.push(currY);
 		}
 		if(tree[i] == ']')
 		{
-			currX = tmpX;
-			currY = tmpY;
+			cout << "restoring to " << currX << " , " << currY<< endl;
+			currX = tmpX.top;
+			currY = tmpY.top;
+			tmpX.pop();
+			tmpY.pop();
 		}
 
 
