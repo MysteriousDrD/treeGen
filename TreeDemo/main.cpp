@@ -153,6 +153,7 @@ void linkCurrentBuffertoShader(GLuint shaderProgramID){
 #pragma endregion VBO_FUNCTIONS
 float pan = 0.0f;
 float direction = 0.1f;
+int inc = 0;
 void display(){
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -171,7 +172,9 @@ void display(){
 	mat4 persp_proj = perspective(45.0, (float)width/(float)height, 0.1, 100.0);
 	mat4 model = rotate_z_deg (identity_mat4 (), 45);
 
-	glDrawArrays(GL_LINES, 0, nVertices);
+
+
+	glDrawArrays(GL_LINES, 0, 4);
 
     glutSwapBuffers();
 }
@@ -180,7 +183,7 @@ string treeSystem(string tree, int depth)
 {
 	
 
-	if(depth == 1) return tree;
+	if(depth == 3) return tree;
 	string tmpTree = tree;
 	string newTree = "";
 
@@ -208,10 +211,10 @@ string treeSystem(string tree, int depth)
 
 vector<float> walkTree(string tree)
 {
-	cout << tree << endl;
+	//cout << tree << endl;
 	
 	vector<float> points;
-	float currX = 0.25;
+	float currX = 0;
 	float currY = 0;
 	stack<float> tmpX;
 	stack<float> tmpY;
@@ -222,7 +225,7 @@ vector<float> walkTree(string tree)
 		{
 			
 			currY += 0.1;
-			cout << "moving forward to " << currX << " , " << currY<< endl;
+			//cout << "moving forward to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
 			nVertices++;
@@ -231,7 +234,7 @@ vector<float> walkTree(string tree)
 		{
 			
 			currX -= angle;
-			cout << "moving left to " << currX << " , " << currY<< endl;
+			//cout << "moving left to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
 			nVertices++;
@@ -240,29 +243,30 @@ vector<float> walkTree(string tree)
 		{
 			
 			currX += angle;
-			cout << "moving right to " << currX << " , " << currY<< endl;
+			//cout << "moving right to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
 			nVertices++;
 		}
 		if(tree[i] == '[')
 		{
-			cout << "storing " << currX << " , " << currY<< endl;
+			//cout << "storing " << currX << " , " << currY<< endl;
 			tmpX.push(currX);
 			tmpY.push(currY);
 		}
 		if(tree[i] == ']')
 		{
-			cout << "restoring to " << currX << " , " << currY<< endl;
+			
 			currX = tmpX.top();
 			currY = tmpY.top();
 			tmpX.pop();
 			tmpY.pop();
+			//cout << "restoring to " << currX << " , " << currY<< endl;
 		}
 
 
 	}
-	cout << "Vertices: " <<  nVertices << endl;
+	//cout << "Vertices: " <<  nVertices << endl;
 	return points;
 }
 
@@ -281,6 +285,13 @@ void updateScene() {
 	glutPostRedisplay();
 }
 
+void keypress(unsigned char key, int x, int y) {
+        if(key=='w')
+		{
+          inc += 1;    
+        }
+}
+
 
 void init()
 {
@@ -291,9 +302,10 @@ void init()
 	string tree =  treeSystem("X", 0);
 	vector<float> pts = walkTree(tree);
 
-	GLfloat *vertices = pts.data();
-
-	for(int i = 0; i < pts.size(); i += 2)
+	//GLfloat *vertices = pts.data();
+	GLfloat vertices[8] = {0, 0.1, 0, 0.2, 0, 0.3, 0, 0.4};
+	cout << "start" << endl;
+	for(int i = 0; i < 8; i += 2)
 	{
 		
 		cout << vertices[i] << ",";
@@ -329,6 +341,7 @@ int main(int argc, char** argv){
 	// Tell glut where the display function is
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
+	glutKeyboardFunc(keypress);
 
 	 // A call to glewInit() must be done after glut is initialized!
     GLenum res = glewInit();
