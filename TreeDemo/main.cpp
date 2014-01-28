@@ -17,6 +17,7 @@
 #include "time.h"
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+#define TREEDEPTH 7
 
 using namespace std;
 GLuint shaderProgramID;
@@ -169,12 +170,12 @@ void display(){
 	int proj_mat_location = glGetUniformLocation (shaderProgramID, "proj");
 	
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40.0));
-	mat4 persp_proj = perspective(45.0, (float)width/(float)height, 0.1, 100.0);
+	mat4 persp_proj = perspective(90.0, (float)width/(float)height, 0.1, 100.0);
 	mat4 model = rotate_z_deg (identity_mat4 (), 45);
 
 
 
-	glDrawArrays(GL_LINES, 0, 4);
+	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
 
     glutSwapBuffers();
 }
@@ -183,7 +184,7 @@ string treeSystem(string tree, int depth)
 {
 	
 
-	if(depth == 3) return tree;
+	if(depth == TREEDEPTH) return tree;
 	string tmpTree = tree;
 	string newTree = "";
 
@@ -191,7 +192,7 @@ string treeSystem(string tree, int depth)
 	{
 		if(tmpTree[i] == 'X')
 		{
-			newTree += " F-[[X]+X]+F[+FX]-X"; // first rule of L System
+			newTree += " F[+X]F[-X]+X"; // first rule of L System
 		}
 		else if(tmpTree[i] == 'F')
 		{
@@ -218,13 +219,13 @@ vector<float> walkTree(string tree)
 	float currY = 0;
 	stack<float> tmpX;
 	stack<float> tmpY;
-	float angle = 0.25;
+	float angle = 0.15;
 	for(int i = 0; i < tree.size(); i++)
 	{
 		if(tree[i] == 'F')
 		{
 			
-			currY += 0.1;
+			currY += 0.01;
 			//cout << "moving forward to " << currX << " , " << currY<< endl;
 			points.push_back(currX);
 			points.push_back(currY);
@@ -235,18 +236,12 @@ vector<float> walkTree(string tree)
 			
 			currX -= angle;
 			//cout << "moving left to " << currX << " , " << currY<< endl;
-			points.push_back(currX);
-			points.push_back(currY);
-			nVertices++;
 		}
 		if(tree[i] == '-')
 		{
 			
 			currX += angle;
 			//cout << "moving right to " << currX << " , " << currY<< endl;
-			points.push_back(currX);
-			points.push_back(currY);
-			nVertices++;
 		}
 		if(tree[i] == '[')
 		{
@@ -288,7 +283,7 @@ void updateScene() {
 void keypress(unsigned char key, int x, int y) {
         if(key=='w')
 		{
-          inc += 1;    
+          inc += 10;    
         }
 }
 
@@ -302,8 +297,8 @@ void init()
 	string tree =  treeSystem("X", 0);
 	vector<float> pts = walkTree(tree);
 
-	//GLfloat *vertices = pts.data();
-	GLfloat vertices[8] = {0, 0.1, 0, 0.2, 0, 0.3, 0, 0.4};
+	GLfloat *vertices = pts.data();
+	//GLfloat vertices[8] = {0, 0.1, 0, 0.2, 0, 0.3, 0, 0.4};
 	cout << "start" << endl;
 	for(int i = 0; i < 8; i += 2)
 	{
