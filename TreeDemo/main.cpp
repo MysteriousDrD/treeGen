@@ -18,7 +18,9 @@
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 #define TREEDEPTH 7
-
+#define ANGLE 25.7
+#define GROWTH 0.01
+#define BRANCH 0.1
 using namespace std;
 GLuint shaderProgramID;
 
@@ -28,6 +30,13 @@ int height = 1080.0;
 int nVertices = 0;
 // Shader Functions- click on + to expand
 #pragma region SHADER_FUNCTIONS
+
+struct turtle{
+	float x;
+	float y;
+	float angle;
+
+};
 
 std::string readShaderSource(const std::string& fileName)
 {
@@ -175,7 +184,7 @@ void display(){
 
 
 
-	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
+	glDrawArrays(GL_LINE_STRIP, 0, inc);
 
     glutSwapBuffers();
 }
@@ -192,7 +201,7 @@ string treeSystem(string tree, int depth)
 	{
 		if(tmpTree[i] == 'X')
 		{
-			newTree += " F[+X]F[-X]+X"; // first rule of L System
+			newTree += "F[+X][-X]FX"; // first rule of L System
 		}
 		else if(tmpTree[i] == 'F')
 		{
@@ -215,48 +224,47 @@ vector<float> walkTree(string tree)
 	//cout << tree << endl;
 	
 	vector<float> points;
-	float currX = 0;
-	float currY = 0;
-	stack<float> tmpX;
-	stack<float> tmpY;
-	float angle = 0.15;
+	stack<turtle> turtles;
+	float angle = ANGLE;
+	turtle leonardo ={};
 	for(int i = 0; i < tree.size(); i++)
 	{
 		if(tree[i] == 'F')
 		{
 			
-			currY += 0.01;
+			//currY += GROWTH
+
+
+
 			//cout << "moving forward to " << currX << " , " << currY<< endl;
-			points.push_back(currX);
-			points.push_back(currY);
+			points.push_back(leonardo.x);
+			points.push_back(leonardo.y);
 			nVertices++;
 		}
 		if(tree[i] =='+')
 		{
-			
-			currX -= angle;
-			//cout << "moving left to " << currX << " , " << currY<< endl;
+			float tmpX = (leonardo.x + BRANCH * cos(-angle));
+			float tmpY =  (leonardo.y + BRANCH * sin(-angle));
+			leonardo.x = tmpX;
+			leonardo.y = tmpY;	
 		}
 		if(tree[i] == '-')
 		{
-			
-			currX += angle;
-			//cout << "moving right to " << currX << " , " << currY<< endl;
+
+			float tmpX = (leonardo.x + BRANCH * cos(angle));
+			float tmpY =  (leonardo.y + BRANCH * sin(angle));
+			leonardo.x = tmpX;
+			leonardo.y = tmpY;	
 		}
 		if(tree[i] == '[')
 		{
-			//cout << "storing " << currX << " , " << currY<< endl;
-			tmpX.push(currX);
-			tmpY.push(currY);
+			turtles.push(leonardo);
 		}
 		if(tree[i] == ']')
 		{
 			
-			currX = tmpX.top();
-			currY = tmpY.top();
-			tmpX.pop();
-			tmpY.pop();
-			//cout << "restoring to " << currX << " , " << currY<< endl;
+			leonardo = turtles.top();
+			turtles.pop();
 		}
 
 
@@ -283,8 +291,13 @@ void updateScene() {
 void keypress(unsigned char key, int x, int y) {
         if(key=='w')
 		{
-          inc += 10;    
+          inc += 1;    
         }
+		if(key='q')
+		{
+			inc = nVertices;
+			cout << nVertices << endl;
+		}
 }
 
 
