@@ -20,7 +20,7 @@
 #define TREEDEPTH 7
 #define ANGLE 25.7
 #define GROWTH 0.01
-#define BRANCH 0.1
+#define BRANCH 0.01
 using namespace std;
 GLuint shaderProgramID;
 
@@ -28,7 +28,7 @@ unsigned int teapot_vao = 0;
 int width = 1920.0;
 int height = 1080.0;
 int nVertices = 0;
-// Shader Functions- click on + to expand
+vector<int> branches;
 #pragma region SHADER_FUNCTIONS
 
 struct turtle{
@@ -126,7 +126,6 @@ GLuint CompileShaders()
 }
 #pragma endregion SHADER_FUNCTIONS
 
-// VBO Functions - click on + to expand
 #pragma region VBO_FUNCTIONS
 
 GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
@@ -164,6 +163,7 @@ void linkCurrentBuffertoShader(GLuint shaderProgramID){
 float pan = 0.0f;
 float direction = 0.1f;
 int inc = 0;
+int old = 0;
 void display(){
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -186,6 +186,7 @@ void display(){
 
 	glDrawArrays(GL_LINE_STRIP, 0, inc);
 
+
     glutSwapBuffers();
 }
 
@@ -201,7 +202,7 @@ string treeSystem(string tree, int depth)
 	{
 		if(tmpTree[i] == 'X')
 		{
-			newTree += "F[+X][-X]FX"; // first rule of L System
+			newTree += "F-[[X]+X]+F[+FX]-X"; // first rule of L System
 		}
 		else if(tmpTree[i] == 'F')
 		{
@@ -225,15 +226,18 @@ vector<float> walkTree(string tree)
 	
 	vector<float> points;
 	stack<turtle> turtles;
-	float angle = ANGLE;
 	turtle leonardo ={};
+	leonardo.angle = 90;
 	for(int i = 0; i < tree.size(); i++)
 	{
 		if(tree[i] == 'F')
 		{
 			
 			//currY += GROWTH
-
+			float tmpX = (leonardo.x + BRANCH * cos(leonardo.angle));
+			float tmpY =  (leonardo.y + BRANCH * sin(leonardo.angle));
+			leonardo.x = tmpX;
+			leonardo.y = tmpY;	
 
 
 			//cout << "moving forward to " << currX << " , " << currY<< endl;
@@ -243,18 +247,11 @@ vector<float> walkTree(string tree)
 		}
 		if(tree[i] =='+')
 		{
-			float tmpX = (leonardo.x + BRANCH * cos(-angle));
-			float tmpY =  (leonardo.y + BRANCH * sin(-angle));
-			leonardo.x = tmpX;
-			leonardo.y = tmpY;	
+			leonardo.angle -= ANGLE;
 		}
 		if(tree[i] == '-')
 		{
-
-			float tmpX = (leonardo.x + BRANCH * cos(angle));
-			float tmpY =  (leonardo.y + BRANCH * sin(angle));
-			leonardo.x = tmpX;
-			leonardo.y = tmpY;	
+			leonardo.angle += ANGLE;
 		}
 		if(tree[i] == '[')
 		{
@@ -265,11 +262,13 @@ vector<float> walkTree(string tree)
 			
 			leonardo = turtles.top();
 			turtles.pop();
+			branches.push_back(nVertices);
 		}
 
 
 	}
 	//cout << "Vertices: " <<  nVertices << endl;
+
 	return points;
 }
 
@@ -293,7 +292,7 @@ void keypress(unsigned char key, int x, int y) {
 		{
           inc += 1;    
         }
-		if(key='q')
+		if(key=='q')
 		{
 			inc = nVertices;
 			cout << nVertices << endl;
@@ -312,14 +311,14 @@ void init()
 
 	GLfloat *vertices = pts.data();
 	//GLfloat vertices[8] = {0, 0.1, 0, 0.2, 0, 0.3, 0, 0.4};
-	cout << "start" << endl;
-	for(int i = 0; i < 8; i += 2)
-	{
+	//cout << "start" << endl;
+	//for(int i = 0; i < 8; i += 2)
+//	{
 		
-		cout << vertices[i] << ",";
-		cout << vertices[i+1] << ",";
-		cout << endl;
-	}
+//		cout << vertices[i] << ",";
+//		cout << vertices[i+1] << ",";
+//		cout << endl;
+//	}
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
 	vector<float> cols;
