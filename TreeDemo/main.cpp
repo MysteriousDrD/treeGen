@@ -15,8 +15,10 @@
 #include <vector>
 #include <stack>
 #include "time.h"
+
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+#include "cylinder.h"
 #define TREEDEPTH 7
 #define ANGLE 25.7
 #define GROWTH 0.01
@@ -24,6 +26,7 @@
 using namespace std;
 GLuint shaderProgramID;
 
+Cylinder c;
 unsigned int teapot_vao = 0;
 int width = 1920.0;
 int height = 1080.0;
@@ -137,10 +140,10 @@ GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
 	// Buffer will contain an array of vertices 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// After binding, we now fill our object with data, everything in "Vertices" goes to the GPU
-	glBufferData(GL_ARRAY_BUFFER, numVertices*6*sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, numVertices*6*sizeof(GLfloat), NULL, GL_STATIC_DRAW); //this is 6 because x,y and 4 colour params
 	// if you have more data besides vertices (e.g., vertex colours or normals), use glBufferSubData to tell the buffer when the vertices array ends and when the colors start
-	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*2*sizeof(GLfloat), vertices);
-	glBufferSubData (GL_ARRAY_BUFFER, numVertices*2*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors);
+	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*2*sizeof(GLfloat), vertices); //0 -> number of vertices
+	glBufferSubData (GL_ARRAY_BUFFER, numVertices*2*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors); //number of vertices -> end of colours
 
 	return VBO;
 }
@@ -164,6 +167,7 @@ float pan = 0.0f;
 float direction = 0.1f;
 int inc = 0;
 int old = 0;
+float foo = 0;
 void display(){
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -179,13 +183,12 @@ void display(){
 	int proj_mat_location = glGetUniformLocation (shaderProgramID, "proj");
 	
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40.0));
-	mat4 persp_proj = perspective(90.0, (float)width/(float)height, 0.1, 100.0);
-	mat4 model = rotate_z_deg (identity_mat4 (), 45);
+	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
+	//mat4 model = rotate_z_deg (identity_mat4 (), 45);
 
-
-
-	glDrawArrays(GL_LINE_STRIP, 0, inc);
-
+	c.draw();
+	//glDrawArrays(GL_LINE_STRIP, 0, inc);
+	inc+= 10;
 
     glutSwapBuffers();
 }
@@ -228,6 +231,8 @@ vector<float> walkTree(string tree)
 	stack<turtle> turtles;
 	turtle leonardo ={};
 	leonardo.angle = 90;
+	float lastX = 0;
+	float lastY = 0;
 	for(int i = 0; i < tree.size(); i++)
 	{
 		if(tree[i] == 'F')
@@ -236,6 +241,8 @@ vector<float> walkTree(string tree)
 			//currY += GROWTH
 			float tmpX = (leonardo.x + BRANCH * cos(leonardo.angle));
 			float tmpY =  (leonardo.y + BRANCH * sin(leonardo.angle));
+			lastX = leonardo.x;
+			lastY = leonardo.y;
 			leonardo.x = tmpX;
 			leonardo.y = tmpY;	
 
@@ -243,6 +250,7 @@ vector<float> walkTree(string tree)
 			//cout << "moving forward to " << currX << " , " << currY<< endl;
 			points.push_back(leonardo.x);
 			points.push_back(leonardo.y);
+
 			nVertices++;
 		}
 		if(tree[i] =='+')
@@ -263,12 +271,13 @@ vector<float> walkTree(string tree)
 			leonardo = turtles.top();
 			turtles.pop();
 			branches.push_back(nVertices);
+
+
 		}
-
-
+		
 	}
 	//cout << "Vertices: " <<  nVertices << endl;
-
+	//cout << branches.size();
 	return points;
 }
 
@@ -290,12 +299,20 @@ void updateScene() {
 void keypress(unsigned char key, int x, int y) {
         if(key=='w')
 		{
-          inc += 1;    
+          inc = 0;    
         }
 		if(key=='q')
 		{
 			inc = nVertices;
 			cout << nVertices << endl;
+		}
+		if(key == 'i')
+		{
+			foo += 1;
+		}
+		if(key == 'k')
+		{
+			foo -= 1;
 		}
 }
 
@@ -308,7 +325,6 @@ void init()
 	//		0.0f, 1.0f, 0.0f, 1.0};
 	string tree =  treeSystem("X", 0);
 	vector<float> pts = walkTree(tree);
-
 	GLfloat *vertices = pts.data();
 	//GLfloat vertices[8] = {0, 0.1, 0, 0.2, 0, 0.3, 0, 0.4};
 	//cout << "start" << endl;
@@ -332,8 +348,12 @@ void init()
 	GLfloat *colors = cols.data();
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
-	generateObjectBuffer(vertices, colors);
+	//generateObjectBuffer(vertices, colors);
+	c.generateVertices(10.0, 5.0, 5.0, vec4(1.0,0.0,0.0,1.0), vec4(1.0,1.0,0.0,1.0),16);
+    c.generateObjectBuffer();
 	linkCurrentBuffertoShader(shaderProgramID);
+
+
 }
 
 int main(int argc, char** argv){
