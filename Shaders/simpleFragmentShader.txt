@@ -1,8 +1,8 @@
 #version 330
 in vec4 color;
 
-in vec3 n_eye;
+//in vec3 n_eye;
 void main(){
-gl_FragColor = vec4 (n_eye, 1.0);
+//gl_FragColor = vec4 (n_eye, 1.0);
 gl_FragColor = color;
 }

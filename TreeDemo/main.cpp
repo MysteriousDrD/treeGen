@@ -148,7 +148,7 @@ GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
 	return VBO;
 }
 
-void linkCurrentBuffertoShader(GLuint shaderProgramID){
+void _linkCurrentBuffertoShader(GLuint shaderProgramID){
 	GLuint numVertices = nVertices;
 	// find the location of the variables that we will be using in the shader program
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "vPosition");
@@ -161,6 +161,7 @@ void linkCurrentBuffertoShader(GLuint shaderProgramID){
 	glEnableVertexAttribArray(colorID);
 	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(numVertices*2*sizeof(GLfloat)));
 }
+
 
 #pragma endregion VBO_FUNCTIONS
 float pan = 0.0f;
@@ -182,11 +183,16 @@ void display(){
 	int view_mat_location = glGetUniformLocation (shaderProgramID, "view");
 	int proj_mat_location = glGetUniformLocation (shaderProgramID, "proj");
 	
-	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40.0));
+	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40));
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
-	//mat4 model = rotate_z_deg (identity_mat4 (), 45);
+	mat4 model = rotate_z_deg(identity_mat4(),foo);
+
+	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
+	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
 	c.draw();
+
 	//glDrawArrays(GL_LINE_STRIP, 0, inc);
 	inc+= 10;
 
@@ -317,24 +323,20 @@ void keypress(unsigned char key, int x, int y) {
 }
 
 
+void linkCurrentBuffertoShader(GLuint shaderProgramID){
+ 
+       glBindAttribLocation (shaderProgramID, 0, "vPosition");
+       glBindAttribLocation (shaderProgramID, 1, "vColor");
+      
+}
+
 void init()
 {
-	// Create 3 vertices that make up a triangle that fits on the viewport 
-	//GLfloat vertices[] = {-1.0f, -1.0f, 0.0f, 1.0,
-	//		1.0f, -1.0f, 0.0f, 1.0, 
-	//		0.0f, 1.0f, 0.0f, 1.0};
+
 	string tree =  treeSystem("X", 0);
 	vector<float> pts = walkTree(tree);
 	GLfloat *vertices = pts.data();
-	//GLfloat vertices[8] = {0, 0.1, 0, 0.2, 0, 0.3, 0, 0.4};
-	//cout << "start" << endl;
-	//for(int i = 0; i < 8; i += 2)
-//	{
-		
-//		cout << vertices[i] << ",";
-//		cout << vertices[i+1] << ",";
-//		cout << endl;
-//	}
+
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
 	vector<float> cols;
@@ -349,7 +351,8 @@ void init()
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
 	//generateObjectBuffer(vertices, colors);
-	c.generateVertices(10.0, 5.0, 5.0, vec4(1.0,0.0,0.0,1.0), vec4(1.0,1.0,0.0,1.0),16);
+	
+	c.generateVertices(10.0, 5.0, 5.0, vec4(0.32,0.19,0.09,1.0), vec4(0.32,0.19,0.09,1.0),16);
     c.generateObjectBuffer();
 	linkCurrentBuffertoShader(shaderProgramID);
 
