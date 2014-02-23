@@ -16,6 +16,7 @@ void main(){
 	//n_eye = (view * vec4 (vertex_normals, 0.0)).xyz;
 	//gl_Position =  proj * view * model * vec4 (vertex_position, 1.0);
 	//gl_Position = vec4(vPosition.x, vPosition.y, vPosition.z, 1.0);
-	gl_Position = proj*view*model*vec4(vPosition.x, vPosition.y, vPosition.z, 1.0);
+	float newY = vPosition.y + gl_InstanceID;
+	gl_Position = proj*view*model*vec4(vPosition.x, newY, vPosition.z, 1.0);
 	color = vColor;
 }
