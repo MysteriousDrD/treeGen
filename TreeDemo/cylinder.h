@@ -102,7 +102,7 @@ public:
 		glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
 		size /= sizeof(GLuint);
 		//glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0);
-		glDrawElementsInstanced(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0,10000);
+		glDrawElementsInstanced(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0,128);
 
 		glBindVertexArray(0);
 	}

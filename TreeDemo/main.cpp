@@ -1,4 +1,4 @@
-
+#define _CRT_SECURE_NO_WARNINGS
 //Some Windows Headers (For Time, IO, etc.)
 #include <windows.h>
 #include <mmsystem.h>
@@ -183,11 +183,20 @@ void display(){
 	int view_mat_location = glGetUniformLocation (shaderProgramID, "view");
 	int proj_mat_location = glGetUniformLocation (shaderProgramID, "proj");
 	
+	GLint W_locations[128];
+	for(int i = 0; i < 128; i++)
+	{
+		char tmp[32];
+		sprintf(tmp, "W[%i]", i);
+		W_locations[i] = glGetUniformLocation(shaderProgramID,tmp);
+	}
+
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40));
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
 	mat4 model = rotate_z_deg(identity_mat4(),foo);
-
-	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
+	mat4 model2 = translate(identity_mat4(), vec3(10.0,0,0));
+	glUniformMatrix4fv (W_locations[0], 1, GL_FALSE, model.m);
+	glUniformMatrix4fv (W_locations[1], 1, GL_FALSE, model2.m);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
