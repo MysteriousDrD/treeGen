@@ -1,8 +1,13 @@
 #version 330
 in vec4 color;
+in vec2 texture_coordinates;
 
+uniform sampler2D basic_texture;
+
+out vec4 frag_colour;
 //in vec3 n_eye;
 void main(){
 //gl_FragColor = vec4 (n_eye, 1.0);
-gl_FragColor = color;
+	vec4 texel = texture2D(basic_texture, texture_coordinates);
+	frag_colour = texel;
 }

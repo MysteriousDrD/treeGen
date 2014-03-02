@@ -27,6 +27,7 @@
 using namespace std;
 GLuint shaderProgramID;
 
+unsigned int tex = 0;
 Cylinder c;
 unsigned int teapot_vao = 0;
 int width = 1920.0;
@@ -185,27 +186,18 @@ void display(){
 	int matrix_location = glGetUniformLocation (shaderProgramID, "model");
 	int view_mat_location = glGetUniformLocation (shaderProgramID, "view");
 	int proj_mat_location = glGetUniformLocation (shaderProgramID, "proj");
-	
-	GLint W_locations[128];
-	for(int i = 0; i < 128; i++)
-	{
-		char tmp[32];
-		sprintf(tmp, "W[%i]", i);
-		W_locations[i] = glGetUniformLocation(shaderProgramID,tmp);
-	}
+
 
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40));
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
-	mat4 model = rotate_z_deg(identity_mat4(),foo);
-	mat4 model2 = translate(identity_mat4(), vec3(10.0,0,0));
-	glUniformMatrix4fv (W_locations[0], 1, GL_FALSE, model.m);
-	glUniformMatrix4fv (W_locations[1], 1, GL_FALSE, model2.m);
+	mat4 model = scale(identity_mat4(), vec3(10,10,10));
+	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
-	c.draw();
 
-	//glDrawArrays(GL_LINE_STRIP, 0, inc);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	inc+= 10;
 
     glutSwapBuffers();
@@ -336,6 +328,39 @@ void keypress(unsigned char key, int x, int y) {
 		}
 }
 
+void generateObjectBufferBillboards(GLuint shaderProgramID, GLfloat vertices[], GLfloat texcoords[])
+{
+	GLuint dimensions = 2;
+	GLuint length = 6;
+	GLuint numVertices = 6;
+	GLuint VBO;
+	GLuint vt_vbo;
+	GLuint positionID = glGetAttribLocation(shaderProgramID, "vPosition");
+	GLuint textureID = glGetAttribLocation(shaderProgramID, "vt");
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, numVertices*3*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &vt_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	glBufferData(GL_ARRAY_BUFFER, dimensions*length*sizeof(GLfloat), texcoords, GL_STATIC_DRAW);
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glEnableVertexAttribArray(positionID);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE,0, NULL);
+
+	glEnableVertexAttribArray(textureID);
+	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
+	glVertexAttribPointer(textureID, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
+}
+
+
 
 void linkCurrentBuffertoShader(GLuint shaderProgramID){
  
@@ -344,13 +369,14 @@ void linkCurrentBuffertoShader(GLuint shaderProgramID){
       
 }
 
+
 void init()
 {
 
 	string tree =  treeSystem("X", 0);
 	vector<float> pts = walkTree(tree);
 	cout << branchCount << endl;
-	GLfloat *vertices = pts.data();
+	/*GLfloat *vertices = pts.data();
 
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
@@ -362,14 +388,30 @@ void init()
 		cols.push_back(0); //b
 		cols.push_back(0); //a
 	}
-	GLfloat *colors = cols.data();
+	GLfloat *colors = cols.data();*/
+	GLfloat texcoords[] = {
+	  0.0f, 1.0f,
+	  0.0f, 0.0f,
+	  1.0, 0.0,
+	  1.0, 0.0,
+	  1.0, 1.0,
+	  0.0, 1.0
+	};
+
+	GLfloat vertices[] = {0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,
+		0.0f, 1.0, 0.0f,
+	};
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
-	//generateObjectBuffer(vertices, colors);
+	generateObjectBufferBillboards(shaderProgramID, vertices, texcoords);
 	
-	c.generateVertices(10.0, 5.0, 5.0, vec4(0.32,0.19,0.09,1.0), vec4(0.32,0.19,0.09,1.0),16);
-    c.generateObjectBuffer();
-	linkCurrentBuffertoShader(shaderProgramID);
+	//c.generateVertices(10.0, 5.0, 5.0, vec4(0.32,0.19,0.09,1.0), vec4(0.32,0.19,0.09,1.0),16);
+    //c.generateObjectBuffer();
+	load_image_to_texture("tree.png", tex, true);
 
 
 }
