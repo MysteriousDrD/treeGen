@@ -3,7 +3,6 @@
 
 layout(location = 0) in vec3 vPosition;
 layout(location = 1) in vec4 vColor;
-layout(location = 2) in vec2 vt;
 
 
 out vec4 color;
@@ -19,5 +18,4 @@ void main(){
 
 	//gl_Position = proj*view*W[gl_InstanceID]*vec4(vPosition, 1.0);
 	color = vColor;
-	texture_coordinates = vt;
 }

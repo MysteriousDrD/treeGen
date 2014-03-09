@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _USE_MATH_DEFINES
 //Some Windows Headers (For Time, IO, etc.)
 #include <windows.h>
 #include <mmsystem.h>
@@ -16,6 +17,7 @@
 #include <stack>
 #include "time.h"
 #include "stb_image.h"
+
 
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -144,10 +146,10 @@ GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
 	// Buffer will contain an array of vertices 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// After binding, we now fill our object with data, everything in "Vertices" goes to the GPU
-	glBufferData(GL_ARRAY_BUFFER, numVertices*6*sizeof(GLfloat), NULL, GL_STATIC_DRAW); //this is 6 because x,y and 4 colour params
+	glBufferData(GL_ARRAY_BUFFER, numVertices*7*sizeof(GLfloat), NULL, GL_STATIC_DRAW); //this is 6 because x,y and 4 colour params
 	// if you have more data besides vertices (e.g., vertex colours or normals), use glBufferSubData to tell the buffer when the vertices array ends and when the colors start
-	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*2*sizeof(GLfloat), vertices); //0 -> number of vertices
-	glBufferSubData (GL_ARRAY_BUFFER, numVertices*2*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors); //number of vertices -> end of colours
+	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*3*sizeof(GLfloat), vertices); //0 -> number of vertices
+	glBufferSubData (GL_ARRAY_BUFFER, numVertices*3*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors); //number of vertices -> end of colours
 
 	return VBO;
 }
@@ -160,10 +162,10 @@ void _linkCurrentBuffertoShader(GLuint shaderProgramID){
 	// Have to enable this
 	glEnableVertexAttribArray(positionID);
 	// Tell it where to find the position data in the currently active buffer (at index positionID)
-	glVertexAttribPointer(positionID, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	// Similarly, for the color data.
 	glEnableVertexAttribArray(colorID);
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(numVertices*2*sizeof(GLfloat)));
+	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(numVertices*3*sizeof(GLfloat)));
 }
 
 
@@ -191,13 +193,15 @@ void display(){
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40));
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
 	mat4 model = scale(identity_mat4(), vec3(10,10,10));
+	model = rotate_y_deg(model, foo);
 	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
 
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
+	//glBindTexture(GL_TEXTURE_2D, tex);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
 	inc+= 10;
 
     glutSwapBuffers();
@@ -260,6 +264,7 @@ vector<float> walkTree(string tree)
 			//cout << "moving forward to " << currX << " , " << currY<< endl;
 			points.push_back(leonardo.x);
 			points.push_back(leonardo.y);
+			points.push_back(0);
 
 			nVertices++;
 		}
@@ -292,7 +297,6 @@ vector<float> walkTree(string tree)
 	//cout << branches.size();
 	return points;
 }
-
 
 void updateScene() {	
 
@@ -328,6 +332,8 @@ void keypress(unsigned char key, int x, int y) {
 		}
 }
 
+
+
 void generateObjectBufferBillboards(GLuint shaderProgramID, GLfloat vertices[], GLfloat texcoords[])
 {
 	GLuint dimensions = 2;
@@ -361,6 +367,29 @@ void generateObjectBufferBillboards(GLuint shaderProgramID, GLfloat vertices[], 
 }
 
 
+vector<float> rotateTree(GLfloat *skeleton, float angle)
+{
+	angle = angle * ONE_DEG_IN_RAD;
+	vector<float> newTree;
+	for(int i = 0; i < nVertices*3; i+=3)
+	{
+		float x = skeleton[i];
+		float y = skeleton[i+1];
+		float z = skeleton[i+2];
+
+		float newZ = z*cos(angle) - x*sin(angle);
+		float newX = z*sin(angle) + x*cos(angle);
+		float newY = y;
+
+		newTree.push_back(newX);
+		newTree.push_back(newY);
+		newTree.push_back(newZ);
+
+	}
+	return newTree;
+
+}
+
 
 void linkCurrentBuffertoShader(GLuint shaderProgramID){
  
@@ -376,7 +405,14 @@ void init()
 	string tree =  treeSystem("X", 0);
 	vector<float> pts = walkTree(tree);
 	cout << branchCount << endl;
-	/*GLfloat *vertices = pts.data();
+	cout << pts.size() << endl;
+	GLfloat *vertices = pts.data();
+	cout << nVertices << endl;
+	vector<float> rPts = rotateTree(vertices, 360);
+	GLfloat *rVertices = rPts.data();
+	cout << "finished rotation" << endl;
+	cout << rPts.size() << endl;
+	cout << pts.size() << endl;
 
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 
@@ -388,8 +424,8 @@ void init()
 		cols.push_back(0); //b
 		cols.push_back(0); //a
 	}
-	GLfloat *colors = cols.data();*/
-	GLfloat texcoords[] = {
+	GLfloat *colors = cols.data();
+	/*GLfloat texcoords[] = {
 	  0.0f, 1.0f,
 	  0.0f, 0.0f,
 	  1.0, 0.0,
@@ -404,14 +440,15 @@ void init()
 		1.0f, 0.0f, 0.0f,
 		1.0f, 1.0f, 0.0f,
 		0.0f, 1.0, 0.0f,
-	};
+	};*/
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
-	generateObjectBufferBillboards(shaderProgramID, vertices, texcoords);
-	
+	//generateObjectBufferBillboards(shaderProgramID, vertices, texcoords);
+	generateObjectBuffer(rVertices, colors);
+	_linkCurrentBuffertoShader(shaderProgramID);
 	//c.generateVertices(10.0, 5.0, 5.0, vec4(0.32,0.19,0.09,1.0), vec4(0.32,0.19,0.09,1.0),16);
     //c.generateObjectBuffer();
-	load_image_to_texture("tree.png", tex, true);
+	//load_image_to_texture("tree.png", tex, true);
 
 
 }
