@@ -29,6 +29,7 @@
 using namespace std;
 GLuint shaderProgramID;
 
+vector<unsigned int> vaos;
 unsigned int tex = 0;
 Cylinder c;
 unsigned int teapot_vao = 0;
@@ -137,6 +138,41 @@ GLuint CompileShaders()
 
 #pragma region VBO_FUNCTIONS
 
+void generateObjectBuffers(vector<vector <float>> rotations, GLfloat colors[])
+{
+	for(int i = 0; i < rotations.size(); i++)
+	{
+
+		GLuint loc1 = glGetAttribLocation(shaderProgramID, "vPosition");
+		GLuint loc2 = glGetAttribLocation(shaderProgramID, "vColor");
+		GLuint numVertices = nVertices;
+		GLuint vp_vbo, vc_vbo;
+
+		glGenBuffers(1, &vp_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
+		glBufferData(GL_ARRAY_BUFFER, numVertices*3*sizeof(GLfloat), rotations[i].data(), GL_STATIC_DRAW);
+
+		glGenBuffers(1, &vc_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vc_vbo);
+		glBufferData(GL_ARRAY_BUFFER, numVertices*4*sizeof(GLfloat), colors, GL_STATIC_DRAW);
+
+		unsigned int vao = 0;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glEnableVertexAttribArray(loc1);
+		glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
+		glVertexAttribPointer(loc1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+		glEnableVertexAttribArray(loc2);
+		glBindBuffer(GL_ARRAY_BUFFER, vc_vbo);
+		glVertexAttribPointer(loc2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+		vaos.push_back(vao);
+	}
+	cout << vaos.size() << endl;
+}
+
+
 GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
 	GLuint numVertices = nVertices;
 	// Genderate 1 generic buffer object, called VBO
@@ -175,6 +211,7 @@ float direction = 0.1f;
 int inc = 0;
 int old = 0;
 float foo = 0;
+int angleOfRotation = 0;
 void display(){
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -199,6 +236,7 @@ void display(){
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
 
+	glBindVertexArray(vaos[foo]);
 	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
 	//glBindTexture(GL_TEXTURE_2D, tex);
 	//glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -325,10 +363,18 @@ void keypress(unsigned char key, int x, int y) {
 		if(key == 'i')
 		{
 			foo += 1;
+			if(foo == 17) foo = 0;
+			cout << foo << endl;
 		}
 		if(key == 'k')
 		{
 			foo -= 1;
+			cout << foo << endl;
+		}
+		if(key == 't')
+		{
+			angleOfRotation++;
+			if(angleOfRotation == 360) angleOfRotation = 0;
 		}
 }
 
@@ -446,7 +492,7 @@ void init()
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
 	//generateObjectBufferBillboards(shaderProgramID, vertices, texcoords);
-	generateObjectBuffer(rVertices, colors);
+	generateObjectBuffers(rotations, colors);
 	_linkCurrentBuffertoShader(shaderProgramID);
 	//c.generateVertices(10.0, 5.0, 5.0, vec4(0.32,0.19,0.09,1.0), vec4(0.32,0.19,0.09,1.0),16);
     //c.generateObjectBuffer();
