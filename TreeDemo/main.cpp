@@ -410,12 +410,14 @@ void init()
 	cout << nVertices << endl;
 	vector<float> rPts = rotateTree(vertices, 360);
 	GLfloat *rVertices = rPts.data();
-	cout << "finished rotation" << endl;
-	cout << rPts.size() << endl;
-	cout << pts.size() << endl;
-
+	vector<vector <float>> rotations;
+	rotations.push_back(pts); //first unrotated tree
+	for(int i = 20; i < 360; i+=20)
+	{
+		rotations.push_back(rotateTree(vertices,i));
+	}
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
-
+	cout << rotations.size() << endl;
 	vector<float> cols;
 	for(int i = 0; i < nVertices; i++)
 	{
