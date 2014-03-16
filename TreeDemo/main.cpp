@@ -222,6 +222,8 @@ float targZ = 1;
 
 void display(){
 
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable( GL_BLEND );
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -487,30 +489,30 @@ void init()
 	// Create a color array that identfies the colors of each vertex (format R, G, B, A)
 	cout << rotations.size() << endl;
 	vector<float> cols;
+	bool nextTransparent = false;
 	for(int i = 0; i < nVertices; i++)
 	{
+		float alpha = 2.0;
+		for(int j = 0; j < branches.size(); j++)
+		{
+			if(i == branches[j])
+			{
+				alpha = 0;
+				nextTransparent = true;
+			}
+		}
+		if(nextTransparent)
+		{
+			alpha = 0;
+			nextTransparent = false;
+		}
 		cols.push_back(0); //r
 		cols.push_back(1); //g
 		cols.push_back(0); //b
-		cols.push_back(0); //a
+		cols.push_back(alpha); //a
+
 	}
 	GLfloat *colors = cols.data();
-	/*GLfloat texcoords[] = {
-	  0.0f, 1.0f,
-	  0.0f, 0.0f,
-	  1.0, 0.0,
-	  1.0, 0.0,
-	  1.0, 1.0,
-	  0.0, 1.0
-	};
-
-	GLfloat vertices[] = {0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 1.0f, 0.0f,
-		0.0f, 1.0, 0.0f,
-	};*/
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
 	//generateObjectBufferBillboards(shaderProgramID, vertices, texcoords);
@@ -530,6 +532,7 @@ int main(int argc, char** argv){
 	// Set up the window
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB);
+
     glutInitWindowSize(width, height);
     glutCreateWindow("Tree Demo");
 	// Tell glut where the display function is
