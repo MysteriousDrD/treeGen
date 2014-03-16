@@ -41,6 +41,7 @@ int width = 1920.0;
 int height = 1080.0;
 int nVertices = 0;
 vector<int> branches;
+vector<int> alphaBranches;
 int branchCount = 0;
 #pragma region SHADER_FUNCTIONS
 
@@ -176,24 +177,8 @@ void generateObjectBuffers(vector<vector <float>> rotations, GLfloat colors[])
 }
 
 
-GLuint generateObjectBuffer(GLfloat vertices[], GLfloat colors[]) {
-	GLuint numVertices = nVertices;
-	// Genderate 1 generic buffer object, called VBO
-	GLuint VBO;
-	glGenBuffers(1, &VBO);
-	// In OpenGL, we bind (make active) the handle to a target name and then execute commands on that target
-	// Buffer will contain an array of vertices 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// After binding, we now fill our object with data, everything in "Vertices" goes to the GPU
-	glBufferData(GL_ARRAY_BUFFER, numVertices*7*sizeof(GLfloat), NULL, GL_STATIC_DRAW); //this is 6 because x,y and 4 colour params
-	// if you have more data besides vertices (e.g., vertex colours or normals), use glBufferSubData to tell the buffer when the vertices array ends and when the colors start
-	glBufferSubData (GL_ARRAY_BUFFER, 0, numVertices*3*sizeof(GLfloat), vertices); //0 -> number of vertices
-	glBufferSubData (GL_ARRAY_BUFFER, numVertices*3*sizeof(GLfloat), numVertices*4*sizeof(GLfloat), colors); //number of vertices -> end of colours
 
-	return VBO;
-}
-
-void _linkCurrentBuffertoShader(GLuint shaderProgramID){
+void linkCurrentBuffertoShader(GLuint shaderProgramID){
 	GLuint numVertices = nVertices;
 	// find the location of the variables that we will be using in the shader program
 	GLuint positionID = glGetAttribLocation(shaderProgramID, "vPosition");
@@ -246,7 +231,7 @@ void display(){
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
-	glBindVertexArray(vaos[foo]);
+	glBindVertexArray(vaos[6]);
 
 	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
 
@@ -344,7 +329,10 @@ vector<float> walkTree(string tree)
 			
 			leonardo = turtles.top();
 			turtles.pop();
-			branches.push_back(nVertices);
+			float distance = sqrt((leonardo.x - lastX)*(leonardo.x - lastX) + (leonardo.y -lastY)*(leonardo.y -lastY));
+			if(distance > 0.03) branches.push_back(nVertices); //keep track of when a large branch ends
+
+			if(distance > 0.1) alphaBranches.push_back(nVertices); //always keep track of every small branch to prevent "snapbacks"
 
 
 		}
@@ -402,41 +390,6 @@ void keypress(unsigned char key, int x, int y) {
 		}
 }
 
-
-
-void generateObjectBufferBillboards(GLuint shaderProgramID, GLfloat vertices[], GLfloat texcoords[])
-{
-	GLuint dimensions = 2;
-	GLuint length = 6;
-	GLuint numVertices = 6;
-	GLuint VBO;
-	GLuint vt_vbo;
-	GLuint positionID = glGetAttribLocation(shaderProgramID, "vPosition");
-	GLuint textureID = glGetAttribLocation(shaderProgramID, "vt");
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, numVertices*3*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &vt_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glBufferData(GL_ARRAY_BUFFER, dimensions*length*sizeof(GLfloat), texcoords, GL_STATIC_DRAW);
-
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	glEnableVertexAttribArray(positionID);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE,0, NULL);
-
-	glEnableVertexAttribArray(textureID);
-	glBindBuffer(GL_ARRAY_BUFFER, vt_vbo);
-	glVertexAttribPointer(textureID, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-
-
-}
-
-
 vector<float> rotateTree(GLfloat *skeleton, float angle)
 {
 	angle = angle * ONE_DEG_IN_RAD;
@@ -460,15 +413,6 @@ vector<float> rotateTree(GLfloat *skeleton, float angle)
 
 }
 
-
-void linkCurrentBuffertoShader(GLuint shaderProgramID){
- 
-       glBindAttribLocation (shaderProgramID, 0, "vPosition");
-       glBindAttribLocation (shaderProgramID, 1, "vColor");
-      
-}
-
-
 void init()
 {
 
@@ -490,37 +434,52 @@ void init()
 	cout << rotations.size() << endl;
 	vector<float> cols;
 	bool nextTransparent = false;
+	int branchCounter = 0;
+	int currentBranch = branches[0];
+	int transparencyCounter = 0;
 	for(int i = 0; i < nVertices; i++)
 	{
-		float alpha = 2.0;
-		for(int j = 0; j < branches.size(); j++)
-		{
-			if(i == branches[j])
-			{
-				alpha = 0;
-				nextTransparent = true;
-			}
-		}
+		float alpha = 1.0;
+
 		if(nextTransparent)
 		{
 			alpha = 0;
 			nextTransparent = false;
 		}
-		cols.push_back(0); //r
-		cols.push_back(1); //g
-		cols.push_back(0); //b
-		cols.push_back(alpha); //a
+		for(int j = 0; j < alphaBranches.size(); j++)
+		{
+			if(i+1 == alphaBranches[j])
+			{
+				alpha = 0;
+				nextTransparent = true;
+			}
+		}
+
+		if(i > currentBranch) branchCounter++;
+		currentBranch = branches[branchCounter];
+
+
+		if(currentBranch - i > 10) //colour brown for bark
+		{
+			cols.push_back(0.54);
+			cols.push_back(0.16);
+			cols.push_back(0.07);
+			cols.push_back(alpha);
+		}
+		else //otherwise if we're close to the end of a branch, colour green for leaf
+		{
+			cols.push_back(0.13); //r
+			cols.push_back(0.54); //g
+			cols.push_back(0.13); //b
+			cols.push_back(alpha); //a
+		}
 
 	}
 	GLfloat *colors = cols.data();
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
-	//generateObjectBufferBillboards(shaderProgramID, vertices, texcoords);
 	generateObjectBuffers(rotations, colors);
-	_linkCurrentBuffertoShader(shaderProgramID);
-	//c.generateVertices(10.0, 5.0, 5.0, vec4(0.32,0.19,0.09,1.0), vec4(0.32,0.19,0.09,1.0),16);
-    //c.generateObjectBuffer();
-	//load_image_to_texture("tree.png", tex, true);
+	linkCurrentBuffertoShader(shaderProgramID);
 
 
 }
