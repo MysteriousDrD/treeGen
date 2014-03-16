@@ -28,9 +28,12 @@
 #define ANGLE 25.7
 #define GROWTH 0.01
 #define BRANCH 0.01
+
+vec3 windInfluence = vec3(0.000, 0.001, 0);
 using namespace std;
 GLuint shaderProgramID;
 
+vector<float>  rPts;
 vector<unsigned int> vaos;
 unsigned int tex = 0;
 unsigned int teapot_vao = 0;
@@ -40,7 +43,6 @@ int nVertices = 0;
 vector<int> branches;
 int branchCount = 0;
 #pragma region SHADER_FUNCTIONS
-bool load_image_to_texture(const char* file_name, unsigned int& tex, bool gen_mips);
 
 struct turtle{
 	float x;
@@ -217,6 +219,7 @@ int angleOfRotation = 0;
 float targX = 1;
 float targY = 0;
 float targZ = 1;
+
 void display(){
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -231,12 +234,12 @@ void display(){
 	int view_mat_location = glGetUniformLocation (shaderProgramID, "view");
 	int proj_mat_location = glGetUniformLocation (shaderProgramID, "proj");
 
-
+	
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40));
 	mat4 view2 = look_at(camera, vec3(0,0,1), vec3(0,1,0));
 	view = view*view2;
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
-	mat4 model = scale(identity_mat4(), vec3(10,10,10));
+	mat4 model = scale(identity_mat4(), vec3(20,20,20));
 	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
@@ -249,14 +252,14 @@ void display(){
 	for(int i = 0; i < 12; i++)
 	{
 		models[i] = identity_mat4();
-		models[i] = scale(models[i], vec3(10,10,10));
+		models[i] = scale(models[i], vec3(20,20,20));
 		models[i] = rotate_y_deg(models[i], 30*i);
 		glUniformMatrix4fv (matrix_location, 1, GL_FALSE, models[i].m);
 		glDrawArrays(GL_LINE_STRIP, 0, nVertices);
 	}
-
     glutSwapBuffers();
 }
+
 
 string treeSystem(string tree, int depth)
 {
@@ -308,11 +311,12 @@ vector<float> walkTree(string tree)
 			float tmpY =  (leonardo.y + BRANCH * sin(leonardo.angle));
 			lastX = leonardo.x;
 			lastY = leonardo.y;
-			leonardo.x = tmpX;
-			leonardo.y = tmpY;	
+			leonardo.x = tmpX +windInfluence.v[0];
+			leonardo.y = tmpY +windInfluence.v[1];	
 
 
 			//cout << "moving forward to " << currX << " , " << currY<< endl;
+
 			points.push_back(leonardo.x);
 			points.push_back(leonardo.y);
 			points.push_back(0);
@@ -472,7 +476,7 @@ void init()
 	cout << pts.size() << endl;
 	GLfloat *vertices = pts.data();
 	cout << nVertices << endl;
-	vector<float> rPts = rotateTree(vertices, 360);
+	rPts = rotateTree(vertices, 360);
 	GLfloat *rVertices = rPts.data();
 	vector<vector <float>> rotations;
 	rotations.push_back(pts); //first unrotated tree
