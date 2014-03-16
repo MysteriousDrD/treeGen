@@ -16,12 +16,14 @@
 #include <vector>
 #include <stack>
 #include "time.h"
-#include "stb_image.h"
 
 
 // Macro for indexing vertex buffer
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
-#include "cylinder.h"
+
+#define STRING_INIT "X"
+#define STRING_X "F-[[X]+X]+F[+FX]-X"
+#define STRING_F "FF"
 #define TREEDEPTH 7
 #define ANGLE 25.7
 #define GROWTH 0.01
@@ -31,7 +33,6 @@ GLuint shaderProgramID;
 
 vector<unsigned int> vaos;
 unsigned int tex = 0;
-Cylinder c;
 unsigned int teapot_vao = 0;
 int width = 1920.0;
 int height = 1080.0;
@@ -269,7 +270,7 @@ string treeSystem(string tree, int depth)
 	{
 		if(tmpTree[i] == 'X')
 		{
-			newTree += "F-[[X]+X]+F[+FX]-X"; // first rule of L System
+			newTree += STRING_X; // first rule of L System
 		}
 		else if(tmpTree[i] == 'F')
 		{
@@ -547,98 +548,6 @@ int main(int argc, char** argv){
     return 0;
 }
 
-bool load_image_to_texture (
-	const char* file_name, unsigned int& tex, bool gen_mips
-) {
-	printf ("loading image %s\n", file_name);
-	int x, y, n;
-	int force_channels = 4;
-	unsigned char* image_data = stbi_load (file_name, &x, &y, &n, force_channels);
-	if (!image_data) {
-		fprintf (
-			stderr,
-			"ERROR: could not load image %s. Check file type and path\n",
-			file_name
-		);
-		fprintf (stderr, "ERROR: could not load image %s", file_name);
-		return false;
-	}
-	printf ("image loaded: %ix%i %i bytes per pixel\n", x, y, n);
-	// NPOT check
-	if (x & (x - 1) != 0 || y & (y - 1) != 0) {
-		fprintf (
-			stderr, "WARNING: texture %s is not power-of-2 dimensions\n", file_name
-		);
-		fprintf (stderr, "WARNING: texture %s is not power-of-two dimensions", file_name);
-	}
-
-	// FLIP UP-SIDE DIDDLY-DOWN
-	// make upside-down copy for GL
-	unsigned char *imagePtr = &image_data[0];
-	int halfTheHeightInPixels = y / 2;
-	int heightInPixels = y;
-
-	// Assuming RGBA for 4 components per pixel.
-	int numColorComponents = 4;
-	// Assuming each color component is an unsigned char.
-	int widthInChars = x * numColorComponents;
-	unsigned char *top = NULL;
-	unsigned char *bottom = NULL;
-	unsigned char temp = 0;
-	for( int h = 0; h < halfTheHeightInPixels; h++) {
-		top = imagePtr + h * widthInChars;
-		bottom = imagePtr + (heightInPixels - h - 1) * widthInChars;
-		for (int w = 0; w < widthInChars; w++) {
-			// Swap the chars around.
-			temp = *top;
-			*top = *bottom;
-			*bottom = temp;
-			++top;
-			++bottom;
-		}
-	}
-
-	// Copy into an OpenGL texture
-	glGenTextures (1, &tex);
-	glActiveTexture (GL_TEXTURE0);
-	glBindTexture (GL_TEXTURE_2D, tex);
-	//glPixelStorei (GL_UNPACK_ALIGNMENT, 1); // TODO?
-	glTexImage2D (
-		GL_TEXTURE_2D,
-		0,
-		GL_RGBA,
-		x,
-		y,
-		0,
-		GL_RGBA,
-		GL_UNSIGNED_BYTE,
-		image_data
-	);
-	// NOTE: need this or it will not load the texture at all
-	if (gen_mips) {
-		// shd be in core since 3.0 according to:
-		// http://www.opengl.org/wiki/Common_Mistakes#Automatic_mipmap_generation
-		// next line is to circumvent possible extant ATI bug
-		// but NVIDIA throws a warning glEnable (GL_TEXTURE_2D);
-		glGenerateMipmap (GL_TEXTURE_2D);
-		printf ("mipmaps generated %s\n", file_name);
-		glTexParameteri (
-			GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR
-		);
-		glTexParameterf (
-			GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4
-		);
-	} else {
-		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	}
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	printf ("image loading done");
-	stbi_image_free (image_data);
-
-	return true;
-}
 
 
 
