@@ -212,6 +212,10 @@ int inc = 0;
 int old = 0;
 float foo = 0;
 int angleOfRotation = 0;
+
+float targX = 1;
+float targY = 0;
+float targZ = 1;
 void display(){
 
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
@@ -220,7 +224,7 @@ void display(){
 	glClearColor (0.5f, 0.5f, 0.5f, 1.0f);
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram (shaderProgramID);
-
+	vec3 camera = vec3(targX,targY,targZ);
 	//Declare your uniform variables that will be used in your shader
 	int matrix_location = glGetUniformLocation (shaderProgramID, "model");
 	int view_mat_location = glGetUniformLocation (shaderProgramID, "view");
@@ -228,19 +232,27 @@ void display(){
 
 
 	mat4 view = translate (identity_mat4 (), vec3 (0.0, 0.0, -40));
+	mat4 view2 = look_at(camera, vec3(0,0,1), vec3(0,1,0));
+	view = view*view2;
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
 	mat4 model = scale(identity_mat4(), vec3(10,10,10));
-	model = rotate_y_deg(model, foo);
 	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
-
 	glBindVertexArray(vaos[foo]);
+
 	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
-	//glBindTexture(GL_TEXTURE_2D, tex);
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-	inc+= 10;
+
+	mat4 models[18];
+	for(int i = 0; i < 12; i++)
+	{
+		models[i] = identity_mat4();
+		models[i] = scale(models[i], vec3(10,10,10));
+		models[i] = rotate_y_deg(models[i], 30*i);
+		glUniformMatrix4fv (matrix_location, 1, GL_FALSE, models[i].m);
+		glDrawArrays(GL_LINE_STRIP, 0, nVertices);
+	}
 
     glutSwapBuffers();
 }
@@ -353,12 +365,11 @@ void updateScene() {
 void keypress(unsigned char key, int x, int y) {
         if(key=='w')
 		{
-          inc = 0;    
+			targX +=1; 
         }
-		if(key=='q')
+		if(key=='s')
 		{
-			inc = nVertices;
-			cout << nVertices << endl;
+			targX -=1;
 		}
 		if(key == 'i')
 		{
@@ -366,15 +377,21 @@ void keypress(unsigned char key, int x, int y) {
 			if(foo == 17) foo = 0;
 			cout << foo << endl;
 		}
-		if(key == 'k')
+		if(key == 'a')
 		{
-			foo -= 1;
-			cout << foo << endl;
+			targY += 1;
 		}
-		if(key == 't')
+		if(key == 'd')
 		{
-			angleOfRotation++;
-			if(angleOfRotation == 360) angleOfRotation = 0;
+			targY -= 1;
+		}
+		if(key == 'q')
+		{
+			targZ += 1;
+		}
+		if(key == 'e')
+		{
+			targZ -= 1;
 		}
 }
 

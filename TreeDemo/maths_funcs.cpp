@@ -471,7 +471,7 @@ mat4 scale (const mat4& m, const vec3& v) {
 
 /*------------------------------3D SCENE MATRIX FUNCTIONS-----------------------------*/
 
-// returns a view matrix using the opengl lookAt style. COLUMN ORDER.
+// returns a view matrix using the opengl At style. COLUMN ORDER.
 mat4 look_at (const vec3& cam_pos, vec3 targ_pos, const vec3& up) {
 	// inverse translation
 	mat4 p = identity_mat4 ();
