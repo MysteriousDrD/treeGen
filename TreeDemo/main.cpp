@@ -8,7 +8,7 @@
 #include <GL/freeglut.h>
 #include <iostream>
 
-#include "maths_funcs.h" //Anton's math class
+#include "maths_funcs.h" //Anton's math class, credit here to Dr Anton Gerdelan for supplying a class of wrapper functions for handling matrices etc
 #include <string> 
 #include <fstream>
 #include <iostream>
@@ -29,7 +29,7 @@
 #define GROWTH 0.01
 #define BRANCH 0.01
 
-vec3 windInfluence = vec3(0.000, 0.001, 0);
+vec3 windInfluence = vec3(0.001, -0.001, 0);
 using namespace std;
 GLuint shaderProgramID;
 
@@ -164,6 +164,7 @@ void generateObjectBuffers(vector<vector <float>> rotations, GLfloat colors[])
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
+
 		glEnableVertexAttribArray(loc1);
 		glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
 		glVertexAttribPointer(loc1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -173,7 +174,7 @@ void generateObjectBuffers(vector<vector <float>> rotations, GLfloat colors[])
 		glVertexAttribPointer(loc2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 		vaos.push_back(vao);
 	}
-	cout << vaos.size() << endl;
+	//cout << vaos.size() << endl;
 }
 
 
@@ -204,7 +205,7 @@ int angleOfRotation = 0;
 float targX = 1;
 float targY = 0;
 float targZ = 1;
-
+float spin = 0;
 void display(){
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -226,24 +227,26 @@ void display(){
 	mat4 view2 = look_at(camera, vec3(0,0,1), vec3(0,1,0));
 	view = view*view2;
 	mat4 persp_proj = perspective(90, (float)width/(float)height, 0.1, 100.0);
-	mat4 model = scale(identity_mat4(), vec3(20,20,20));
-	glUniformMatrix4fv (matrix_location, 1, GL_FALSE, model.m);
+
+
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view.m);
 
-	glBindVertexArray(vaos[6]);
 
-	glDrawArrays(GL_LINE_STRIP, 0, nVertices);
+	glBindVertexArray(vaos[0]);
 
-	mat4 models[18];
-	for(int i = 0; i < 12; i++)
+	mat4 models[360];
+	for(int i = 0; i < 40; i++)
 	{
 		models[i] = identity_mat4();
 		models[i] = scale(models[i], vec3(20,20,20));
-		models[i] = rotate_y_deg(models[i], 30*i);
+		models[i] = rotate_y_deg(models[i], spin+(10*i));
 		glUniformMatrix4fv (matrix_location, 1, GL_FALSE, models[i].m);
 		glDrawArrays(GL_LINE_STRIP, 0, nVertices);
 	}
+
+	spin += 0.1;
+
     glutSwapBuffers();
 }
 
@@ -290,6 +293,8 @@ vector<float> walkTree(string tree)
 	float lastY = 0;
 	for(int i = 0; i < tree.size(); i++)
 	{
+		//float angleModifier = static_cast <float> (rand()) / static_cast <float> (RAND_MAX); //random modifier between 0 and 1 for each branch
+		float angleModifier = 0;
 		if(tree[i] == 'F')
 		{
 			
@@ -312,12 +317,12 @@ vector<float> walkTree(string tree)
 		}
 		if(tree[i] =='+')
 		{
-			leonardo.angle -= ANGLE;
+			leonardo.angle -= ANGLE+angleModifier;
 			branchCount++;
 		}
 		if(tree[i] == '-')
 		{
-			leonardo.angle += ANGLE;
+			leonardo.angle += ANGLE+angleModifier;
 			branchCount++;
 		}
 		if(tree[i] == '[')
@@ -338,7 +343,7 @@ vector<float> walkTree(string tree)
 		}
 		
 	}
-	//cout << "Vertices: " <<  nVertices << endl;
+	cout << "Vertices: " <<  nVertices << endl;
 	//cout << branches.size();
 	return points;
 }
